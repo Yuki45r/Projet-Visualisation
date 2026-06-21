@@ -1,4 +1,4 @@
-const width = 1000;
+const width = 900;
 const height = 550;
 const marginTop = 40;
 const marginBottom = 70;
@@ -6,14 +6,14 @@ const marginLeft = 70;
 const marginRight = 200;
 
 // Création du svg
-const svg = d3
+const svg1 = d3
   .select("#dataviz")
   .append("svg")
   .attr("width", width)
   .attr("height", height)
   .style("border", "1px solid black")
   .style("margin-top", "20px")
- 
+
   .append("g")
   .attr("transform", `translate(${marginLeft}, ${marginTop})`);
 
@@ -29,9 +29,9 @@ function Scatter() {
         .domain([d3.min(data, (d) => Number(d.score)) - 0.1, 10])
         .range([height - marginTop - marginBottom, 0]);
 
-      svg.append("g").call(d3.axisLeft(y));
+      svg1.append("g").call(d3.axisLeft(y));
 
-      svg
+      svg1
         .append("text")
         .attr("transform", "rotate(-90)")
         .attr("x", -(height - marginTop - marginBottom) / 2)
@@ -45,12 +45,12 @@ function Scatter() {
         .range([0, width - marginLeft - marginRight]);
 
       // Mettre xAxis dans un variable pour l'utiliser dans brush
-      const xAxis = svg
+      const xAxis = svg1
         .append("g")
         .attr("transform", `translate(0,${height - marginTop - marginBottom})`)
         .call(d3.axisBottom(x));
 
-      svg
+      svg1
         .append("text")
         .attr("x", (width - marginLeft - marginRight) / 2)
         .attr("y", height - marginTop - marginBottom + 50)
@@ -80,7 +80,7 @@ function Scatter() {
         // Avec l'aide d'une IA, utilisation de d3.quantize() pour générer une couleur distincte par genre. 
 
       // Légendes des genres
-      const legende = svg
+      const legende = svg1
         .append("g")
         .attr(
           "transform",
@@ -120,6 +120,10 @@ function Scatter() {
 
       const mouseover = function () {
         tooltip.style("opacity", 1);
+
+        d3.select(this)
+          .attr("stroke", "black")
+          .attr("stroke-widht", 2);
       };
 
       const mousemove = function (event, d) {
@@ -139,11 +143,14 @@ function Scatter() {
       };
 
       const mouseout = function () {
-        tooltip.transition().duration(200).style("opacity", 0);
+        tooltip.transition().duration(200).style("opacity", 0)
+        
+        d3.select(this)
+          .attr("stroke", "none");
       };
 
       // ClipPath: tout ce qui se trouve en dehors de cette zone ne sera pas dessiné
-      svg
+      svg1
         .append("defs")
         .append("clipPath")
         .attr("id", "clip")
@@ -152,7 +159,7 @@ function Scatter() {
         .attr("height", height - marginTop - marginBottom);
 
       // Variable scatter: contient les cerles et le brush
-      const scatter = svg.append("g").attr("clip-path", "url(#clip)");
+      const scatter = svg1.append("g").attr("clip-path", "url(#clip)");
 
       // Fonction qui définit idleTimeOut à null
       let idleTimeout;
@@ -191,7 +198,151 @@ function Scatter() {
         .attr("opacity", 0.7)
         .on("mouseover", mouseover)
         .on("mousemove", mousemove)
-        .on("mouseout", mouseout);
+        .on("mouseout", mouseout)
+        .on("click", function(event, d){
+          BoxPlot(d); // Affiche le boxplot de l'anime cliqué 
+        });
+
+        function BoxPlot(d) {
+          let genre ="Unknown";
+          genre = d.genres.split(",")[0];
+          
+          // On récupère les scores des animes du même genre que celui cliqué
+          const donnees = data 
+          .filter((d) => {
+            return d.genres.split(",")[0] === genre;
+          })
+          .map((d) =>  {
+            return Number(d.score)
+          });
+
+          donnees.sort(d3.ascending); // Tri nécessaire pour calculer Q1, médiane et Q3
+
+          // Calcule des statitiques du boxplot
+          const q1 = d3.quantile(donnees, 0.25); // 25% des valeurs   
+          const mediane = d3.quantile(donnees, 0.5); // 50% des valeurs 
+          const q3 = d3.quantile(donnees, 0.75); // 75% des valeurs
+          const interQuantileRange = q3 - q1; // Ecart interquartile
+          const min = q1 - 1.5 * interQuantileRange; // Borne inférieur 
+          const max = q3 + 1.5 * interQuantileRange // Borne supérieur
+          
+          // Supprime l'ancien boxplot avant d'en dessiner un nouveau 
+          d3.select("#boxplot").selectAll("*").remove();
+
+          const mTop = 30;
+          const mRight = 30;
+          const mBottom = 30;
+          const mLeft = 55;
+
+          const w = 400 - mLeft - mRight;
+          const h = 400 - mTop - mBottom;
+
+          //Création du SVG du boxplot
+          const svg2 = d3.select("#boxplot")
+            .append("svg")
+            .attr("width", w + mLeft + mRight)
+            .attr("height", h + mTop + mBottom + 250)
+            .append("g")
+            .attr("transform", `translate(${mLeft},${mTop})`);
+
+          const yB = d3.scaleLinear()
+            .domain([0, 10])
+            .range([h, 0]);
+
+          svg2.append("g")
+            .call(d3.axisLeft(yB));
+          
+          // Positionnement central du boxplot
+          const centre = 150; 
+          const largeur = 100;
+
+          // Points individuels avec jitter 
+          // Affiche tous les score individuels du genre
+          const jitterWidth = 100
+          svg2.selectAll("indPoints")
+            .data(donnees)
+            .enter()
+            .append("circle")
+            .attr("class", "indPoints")
+            .attr("cx", () => centre + (Math.random() - 0.5) * jitterWidth)
+            .attr("cy", d => yB(d))
+            .attr("r", 2)
+            .attr("fill", "#999")
+            .attr("opacity", 0.3);
+
+          // Point représentant l'animé sélectionné
+          // Met en évidence l'anime sélecionner
+          svg2.append("circle")
+            .attr("cx", centre)
+            .attr("cy", yB(Number(d.score)))
+            .attr("r", 6)
+            .attr("fill", "red")
+            .attr("stroke", "black")
+            .attr("stroke-width", 1.5);
+          
+          const info = d3.select("#infoAnime");
+          
+          info.html(`
+            <img src="${d.image_url}" alt="${d.name}">
+            <h3>${d.name}</h3>
+            <p><strong> Score :</strong> ${d.score}</p>
+            <p><strong> Popularité :</strong> ${d.popularity}</p>
+            <p><strong> Genre :</strong> ${genre}</p>
+            <p><strong> Episodes :</strong> ${d.episodes}</p>
+            <p><strong> Members :</strong> ${d.members}</p>
+            <p><strong> Scored by :</strong> ${d.scored_by}</p>
+            <p><strong> Favorites :</strong> ${d.favorites}</p>
+            `)
+
+          //Ligne verticale 
+          svg2.append("line")
+          .attr("x1", centre)
+          .attr("x2", centre)
+          .attr("y1", yB(min))
+          .attr("y2", yB(max))
+          .attr("stroke", "#333")
+          .attr("stroke-width", 2);
+
+          
+          // Afficher la boîte
+          svg2.append("rect")
+            .attr("x", centre - largeur / 2)
+            .attr("y", yB(q3))
+            .attr("height", yB(q1) - yB(q3))
+            .attr("width", largeur)
+            .attr("stroke", "black")
+            .attr("fill", "#69b3a2");
+
+          // Min, médiane, max
+          svg2.selectAll("toto")
+            .data([min, mediane, max])
+            .enter()
+            .append("line")
+            .attr("x1", centre - largeur / 2)
+            .attr("x2", centre + largeur / 2)
+            .attr("y1", d => yB(d))
+            .attr("y2",  d => yB(d))
+            .attr("stroke", "#333")
+            .attr("stroke-width", 2)
+            .attr("fill", "#69b3a2");
+
+          // Ligne médiane (épaisse)
+          svg2.append("line")
+            .attr("x1", centre - largeur / 2)
+            .attr("x2", centre + largeur / 2)
+            .attr("y1", yB(mediane))
+            .attr("y2", yB(mediane))
+            .attr("stroke", "red")
+            .attr("stroke-width", 3)
+          
+          // Titre 
+          svg2.append("text")
+          .attr("x", centre)
+          .attr("y", -mTop / 2)
+          .attr("text-anchor", "middle")
+          .style("font-size", "17px")
+          .text(`Distribution des scores : ${genre}`);
+        }
 
 
       // Sélectionnez une zone pour effectuer un zoom
@@ -218,7 +369,8 @@ function Scatter() {
           .transition()
           .duration(1000)
           .attr("cx", (d) => x(Number(d.popularity)))
-          .attr("cy", (d) => y(Number(d.score)));
+          .attr("cy", (d) => y(Number(d.score)))
+          .attr("r", extent ? 9 : 2); // Augmentate la taille des cercles 
       }
     })
     .catch((error) => {
