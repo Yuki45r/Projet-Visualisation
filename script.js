@@ -288,9 +288,9 @@ function Scatter() {
             <p><strong> Score :</strong> ${d.score}</p>
             <p><strong> Popularité :</strong> ${d.popularity}</p>
             <p><strong> Genre :</strong> ${genre}</p>
-            <p><strong> Episodes :</strong> ${d.episodes}</p>
+            <p><strong> Episodes :</strong> ${+d.episodes}</p>
             <p><strong> Members :</strong> ${d.members}</p>
-            <p><strong> Scored by :</strong> ${d.scored_by}</p>
+            <p><strong> Scored by :</strong> ${+d.scored_by}</p>
             <p><strong> Favorites :</strong> ${d.favorites}</p>
             `)
 
@@ -311,7 +311,7 @@ function Scatter() {
             .attr("height", yB(q1) - yB(q3))
             .attr("width", largeur)
             .attr("stroke", "black")
-            .attr("fill", "#69b3a2");
+            .attr("fill", couleurs(genre)); // Colore la boîte selon le genre de l'anime
 
           // Min, médiane, max
           svg2.selectAll("toto")
@@ -332,7 +332,7 @@ function Scatter() {
             .attr("x2", centre + largeur / 2)
             .attr("y1", yB(mediane))
             .attr("y2", yB(mediane))
-            .attr("stroke", "red")
+            .attr("stroke", "white")
             .attr("stroke-width", 3)
           
           // Titre 
@@ -343,7 +343,6 @@ function Scatter() {
           .style("font-size", "17px")
           .text(`Distribution des scores : ${genre}`);
         }
-
 
       // Sélectionnez une zone pour effectuer un zoom
       // Doucle-clique pour dézoomer
@@ -364,13 +363,15 @@ function Scatter() {
 
         xAxis.transition().duration(1000).call(d3.axisBottom(x));
 
+        const tailleCercle = d3.scaleSymlog().domain([22254, 0]).range([2, 15]);
+
         scatter
           .selectAll("circle")
           .transition()
           .duration(1000)
           .attr("cx", (d) => x(Number(d.popularity)))
           .attr("cy", (d) => y(Number(d.score)))
-          .attr("r", extent ? 9 : 2); // Augmentate la taille des cercles 
+          .attr("r", tailleCercle(x.domain()[0] - x.domain()[1])); // Augmente la taille des cercles  selon le niveau de zoom
       }
     })
     .catch((error) => {
