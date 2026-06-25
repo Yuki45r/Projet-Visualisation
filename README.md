@@ -237,9 +237,3 @@ Les trois sections suivantes ont eu une assistance d'IA :
 Ce projet permet d'explorer comment une visualisation de données bien conçue peut offrir une perspective sur la relation entre qualité et popularité, et faciliter la découverte des "hidden gems" . Ces excellents animes qui méritent plus de reconnaissance.
 
 L'interactivité (zoom, boxplot au clic) invite l'utilisateur à explorer les données selon ses intérêts et ses questions.
-
----
-
-**Auteur** : Kezia Danielson 
-
-**Cours** : Visualisation de données
