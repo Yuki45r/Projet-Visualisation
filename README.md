@@ -144,7 +144,7 @@ const tailleCercle = d3.scaleSymlog().domain([22254, 0]).range([2, 15]);
 - **Échelle symlog** : compression logarithmique pour une augmentation progressive
 
 #### Capture d'écran
-![alt text](image.png)
+![capture d'écran](image.png)
 
 ---
 
@@ -184,7 +184,7 @@ Au clic sur un anime, un boxplot apparaît montrant :
 - Conversion des chiffres (pas de décimales inutiles : `+d.episodes`)
 
 #### Capture d'écran
-![alt text](image-1.png)
+![capture d'écran](image-1.png)
 
 ---
 
